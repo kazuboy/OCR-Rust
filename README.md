@@ -1,83 +1,83 @@
 # OCR-Rust (Gemini OCR+)
 
-Gemini OCR+ is a Windows desktop application for OCR extraction and AI-assisted file organization, built with Tauri (Rust) and Next.js.
+Tauri (Rust) + Next.js で構成した、Windows向けの OCR / 抽出 / ファイル整理アプリです。
 
-## About
+## 概要
 
-Gemini OCR+ supports multi-format extraction output (TXT/MD/CSV/JSON), prompt templates, and practical post-processing such as translation, summarization, and PII masking.  
-Windows installers are distributed through GitHub Releases.
+Gemini OCR+ は、抽出結果の複数フォーマット出力（TXT / MD / CSV / JSON）、プロンプトテンプレート管理、翻訳・要約・PIIマスキングなどの自動加工に対応しています。  
+Windows インストーラは GitHub Releases で配布します。
 
-## Features
+## 主な機能
 
-- OCR extraction from documents and images
-- Output formats: TXT / Markdown / CSV / JSON
-- Optional YAML Frontmatter for Markdown
-- Custom prompt templates (save / edit / delete)
-- Advanced output processing:
-  - Translation output mode
-  - Summary modes (3 bullets / conclusion only)
-  - PII masking
-  - Auto tag generation
-- AI-assisted file organization and rule-based renaming
-- Exact duplicate detection and removal
-- Move selected files to Recycle Bin
+- 文書・画像の OCR 抽出
+- 出力形式: TXT / Markdown / CSV / JSON
+- Markdown 向け YAML Frontmatter
+- カスタムプロンプトテンプレート（保存 / 編集 / 削除）
+- 出力内容の自動加工
+  - 翻訳出力
+  - 要約モード（重要3点 / 結論のみ）
+  - 個人情報マスキング（PII）
+  - 自動タグ生成
+- AI提案によるファイル整理とルールベースリネーム
+- 完全一致重複の検知・削除
+- 選択ファイルのゴミ箱移動
 
-## Stack
+## 技術スタック
 
-- Frontend: Next.js 16, React 19, TypeScript
-- Desktop: Tauri v2 + Rust
+- Frontend: Next.js 16 / React 19 / TypeScript
+- Desktop: Tauri v2 / Rust
 - AI: Gemini API
 - Storage: SQLite (rusqlite)
 
-## Requirements
+## 動作要件
 
-- Node.js 20+
+- Node.js 20 以上
 - Rust stable
-- Windows 10/11 (recommended)
+- Windows 10 / 11 推奨
 
-## Setup
+## セットアップ
 
 ```bash
 npm ci
 ```
 
-Configure Gemini API key in either of these ways:
+Gemini APIキーは以下のどちらかで設定してください。
 
-- Save it from the in-app model settings dialog
-- Set environment variable `GEMINI_API_KEY`
+- アプリ内のモデル設定画面で保存
+- 環境変数 `GEMINI_API_KEY` を設定
 
-## Development
+## 開発起動
 
-Run web UI only:
+Web UI のみ:
 
 ```bash
 npm run dev
 ```
 
-Run as desktop app (Tauri):
+デスクトップアプリ (Tauri):
 
 ```bash
 npm run tauri dev
 ```
 
-## Build (Local)
+## ローカルビルド
 
 ```bash
 npm run tauri:build
 ```
 
-Windows installer is typically generated at:
+Windows インストーラは通常、次に生成されます。
 
 - `src-tauri/target/release/bundle/nsis/*.exe`
 
 ## GitHub Release (Windows EXE)
 
-This repository includes a release workflow:
+このリポジトリには Release 用 workflow が含まれています。
 
-- Workflow file: `.github/workflows/release.yml`
-- Trigger: pushing tags matching `v*`
+- workflow: `.github/workflows/release.yml`
+- トリガー: `v*` タグ push
 
-Example:
+例:
 
 ```bash
 git tag -a v0.1.1 -m "Release v0.1.1"
@@ -85,18 +85,18 @@ git push origin main
 git push origin v0.1.1
 ```
 
-The workflow builds release binaries and attaches:
+workflow では次を Release に添付します。
 
-- Windows installer artifact(s)
-- `SHA256SUMS.txt` checksum file
+- Windows インストーラ成果物
+- `SHA256SUMS.txt`（チェックサム）
 
-## Security Notes
+## セキュリティ方針（概要）
 
-- File operations in Rust are scoped to allowed local roots.
-- Proposed names and paths are validated before filesystem operations.
-- Move operations prefer `rename` first and use safe fallback behavior to reduce inconsistency.
+- Rust 側のファイル操作は許可ルート配下に制限
+- 実行前にファイル名・パスを検証
+- 移動は `rename` 優先、失敗時は安全なフォールバックで不整合を抑制
 
-## Notes
+## 注意
 
-- `api_key.txt` is ignored by `.gitignore`; do not commit secrets.
-- `src/app/renamer` currently redirects to `filing`.
+- `api_key.txt` は `.gitignore` 済み（機密情報はコミットしない）
+- `src/app/renamer` は現状 `filing` へリダイレクト
