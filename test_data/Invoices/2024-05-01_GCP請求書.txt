@@ -1,0 +1,9 @@
+Invoice
+Google Cloud Platform
+Billing Period: April 1 - April 30, 2024
+Invoice Date: May 1, 2024
+Total Amount: $42.50
+Project: My-OCR-Project
+Services: Cloud Run, Cloud Storage, Gemini API
+Tax: $0.00
+Payment due by May 30

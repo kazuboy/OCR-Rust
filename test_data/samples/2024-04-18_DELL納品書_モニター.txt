@@ -1,0 +1,8 @@
+DELIVERY NOTE
+DELL Technologies
+Date: 2024-04-18
+Customer: User
+Item: Dell UltraSharp 27 Monitor - U2723QE
+Quantity: 1
+Serial Number: CN-0XXXXX-XXXXX
+Status: Delivered
