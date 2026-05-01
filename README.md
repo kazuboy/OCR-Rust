@@ -1,61 +1,55 @@
-# Gemini OCR+
+OCR-Rust (Gemini OCR+)
+Tauri + Next.js で作成した、デスクトップ向け OCR / 抽出 / ファイル整理アプリです。
+GitHub Release では Windows 向け EXE を配布します。
 
-> AIの力で、ドキュメントの抽出・リネーム・整理をワンストップで。
+主な機能
+文書・画像の OCR 抽出（TXT / MD / CSV / JSON）
+YAML Frontmatter 付き Markdown 出力
+カスタムプロンプト + テンプレート保存/編集
+追加加工（翻訳 / 要約 / PII マスキング / 自動タグ）
+ファイル整理（AI提案 / ルールベース）
+重複検知（完全一致）とゴミ箱移動
+技術スタック
+Frontend: Next.js 16 / React 19 / TypeScript
+Desktop: Tauri v2 (Rust)
+AI: Gemini API
+DB: SQLite (rusqlite)
+動作環境
+Node.js 20 以上
+Rust stable
+Windows 10/11 推奨
+セットアップ
+npm ci
+APIキーは次のいずれかで設定します。
 
-**Gemini OCR+** は、Google Gemini API を活用した Windows 向けデスクトップ OCR ツールです。  
-PDF や画像からテキストを抽出するだけでなく、AIによるファイル名の自動提案やフォルダへの自動振り分けまで、ドキュメント管理に必要な作業を一つのアプリで完結できます。
+アプリ内のモデル設定画面で保存
+環境変数 GEMINI_API_KEY を設定
+開発起動
+Web のみ確認:
 
-![Tauri](https://img.shields.io/badge/Tauri-v2-blue?logo=tauri)
-![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
-![Rust](https://img.shields.io/badge/Rust-1.77+-orange?logo=rust)
-![License](https://img.shields.io/badge/license-MIT-green)
+npm run dev
+Tauri デスクトップとして起動:
 
----
+npm run tauri dev
+ビルド（ローカル）
+npm run tauri:build
+生成物（Windows EXE）は通常、次に出力されます。
 
-## ✨ 主な機能
+src-tauri/target/release/bundle/nsis/*.exe
+GitHub Release（EXE配布）
+このリポジトリには tag push で Release を作る workflow が含まれています。
 
-### 📄 OCR テキスト抽出
-- **高精度抽出**: PDF・画像（PNG, JPG, WebP 等）からテキストを抽出
-- **構造化変換**: Gemini AI による高精度な構造化テキスト変換
-- **柔軟な保存**: TXT / Markdown / CSV 形式で保存（追記モードも対応）
-- **一括処理**: 複数ファイルの一括処理が可能
+Workflow: .github/workflows/release.yml
+トリガー: v* タグの push
+例:
 
-### 🏷️ リネーマー
-- **自動提案**: ファイル内容を AI が解析し、最適なファイル名を自動提案
-- **高度なルール**: ルールベースのリネーム（正規表現、連番付与など）も対応
-- **安全な確認**: プレビュー付きで確認してから実行可能
-
-### 📁 ファイリング（自動振り分け）
-- **スマート提案**: AI が内容を読み取り、リネームと保存先の提案をセットで実行
-- **整理アクション**: 移動 / コピーを選択可能
-- **自動分類**: フォルダグルーピング機能（拡張子別、日付別、ファイル名別）
-- **カスタム可能**: 用途に応じた振り分けルールをテンプレートとして保存
-
-### 🛡️ セキュリティ
-- **アクセス制限**: パス検証によるディレクトリトラバーサル防止
-- **安全な命名**: Windows 予約名・禁止文字のバリデーション
-- **シンボリックリンク対策**: リンク経由の外部脱出を防止
-- **堅牢なファイル操作**: 移動時のアトミック処理と失敗時のロールバック機構
-
----
-
-## 🚀 動作環境
-
-| 項目 | 要件 |
-|------|------|
-| OS | Windows 10 / 11（64bit） |
-| Rust | 1.77.2 以上 |
-| Node.js | 18 以上 |
-| API キー | Google AI Studio で取得した Gemini API キー |
-
----
-
-## 📦 インストール方法
-
-### 🔧 ソースからビルドする場合
-
-#### 手順
-1. **リポジトリをクローン**
-   ```bash
-   git clone https://github.com/kazuboy/OCR-Rust.git
-   cd OCR-Rust
+git tag -a v0.1.1 -m "Release v0.1.1"
+git push origin main
+git push origin v0.1.1
+セキュリティ方針（概要）
+Rust 側のファイル操作は許可ルート配下に制限しています。
+リネーム/移動時は不正なファイル名・パス要素を検証します。
+移動処理は rename 優先、失敗時フォールバックで不整合を抑制します。
+注意
+api_key.txt は .gitignore 済みです。機密情報はコミットしないでください。
+src/app/renamer は現状 filing へリダイレクトする導線です。
