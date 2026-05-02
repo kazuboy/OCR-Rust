@@ -42,6 +42,8 @@ interface ExtractionResult {
 interface ModelSettingsInfo {
   model_id: string;
   has_api_key: boolean;
+  has_saved_api_key: boolean;
+  has_env_api_key: boolean;
 }
 
 interface ModelListItem {
@@ -279,8 +281,14 @@ export default function Home() {
   const [modelId, setModelId] = useState("");
   const [modelOptions, setModelOptions] = useState<ModelListItem[]>([]);
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [hasSavedApiKey, setHasSavedApiKey] = useState(false);
+  const [hasEnvApiKey, setHasEnvApiKey] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [isSavingModel, setIsSavingModel] = useState(false);
+  const [isClearingApiKey, setIsClearingApiKey] = useState(false);
+  const [isTestingApiKey, setIsTestingApiKey] = useState(false);
   const [modelMessage, setModelMessage] = useState("");
 
   const [isDragOver, setIsDragOver] = useState(false);
@@ -750,6 +758,8 @@ export default function Home() {
       const settings = await invoke<ModelSettingsInfo>("get_model_settings");
       setModelId(settings.model_id);
       setHasApiKey(settings.has_api_key);
+      setHasSavedApiKey(settings.has_saved_api_key);
+      setHasEnvApiKey(settings.has_env_api_key);
       if (fetchList) {
         setIsLoadingModels(true);
         setModelMessage("");
@@ -765,6 +775,8 @@ export default function Home() {
 
   const handleOpenModelSettings = async () => {
     setIsModelSettingsOpen(true);
+    setApiKeyInput("");
+    setShowApiKey(false);
     await loadModelSettings(true);
   };
 
@@ -781,12 +793,48 @@ export default function Home() {
     setIsSavingModel(true);
     setModelMessage("");
     try {
+      const apiKey = apiKeyInput.trim();
+      if (apiKey.length > 0) {
+        await invoke("set_api_key", { apiKey });
+      }
       await invoke("set_model_id", { modelId: trimmed });
-      setModelMessage("モデル設定を保存しました。");
+      await loadModelSettings(false);
+      setModelMessage(apiKey.length > 0 ? "モデル設定とAPIキーを保存しました。" : "モデル設定を保存しました。");
+      setApiKeyInput("");
     } catch (e) {
       setModelMessage(String(e));
     } finally {
       setIsSavingModel(false);
+    }
+  };
+
+  const handleClearApiKey = async () => {
+    setIsClearingApiKey(true);
+    setModelMessage("");
+    try {
+      await invoke("clear_api_key");
+      setApiKeyInput("");
+      await loadModelSettings(false);
+      setModelMessage("保存済みAPIキーを削除しました。");
+    } catch (e) {
+      setModelMessage(String(e));
+    } finally {
+      setIsClearingApiKey(false);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    setIsTestingApiKey(true);
+    setModelMessage("");
+    try {
+      const models = await invoke<ModelListItem[]>("list_available_models");
+      setModelOptions(models);
+      setModelMessage(`接続テスト成功: 利用可能モデル ${models.length} 件`);
+      await loadModelSettings(false);
+    } catch (e) {
+      setModelMessage(`接続テスト失敗: ${String(e)}`);
+    } finally {
+      setIsTestingApiKey(false);
     }
   };
 
@@ -1220,8 +1268,25 @@ export default function Home() {
             <p className="mt-1 text-xs text-slate-500">
               使用するモデルを選択して保存します。APIキー状態: {hasApiKey ? "設定済み" : "未設定"}
             </p>
+            <p className="text-[11px] text-slate-500">
+              保存キー: {hasSavedApiKey ? "あり" : "なし"} / 環境変数: {hasEnvApiKey ? "あり" : "なし"}
+            </p>
 
             <div className="mt-3 space-y-2">
+              <label className="text-sm font-medium text-slate-700">APIキー（任意入力）</label>
+              <Input
+                className="silk-pressed border-0 bg-[#e9edf3] text-slate-700"
+                type={showApiKey ? "text" : "password"}
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder="未入力なら既存キーを変更しません"
+                autoComplete="off"
+              />
+              <label className="flex items-center gap-2 text-xs text-slate-600">
+                <input type="checkbox" checked={showApiKey} onChange={(e) => setShowApiKey(e.target.checked)} />
+                APIキーを表示
+              </label>
+
               <label className="text-sm font-medium text-slate-700">モデル一覧（選択式・推奨）</label>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <div className="min-w-0">
@@ -1243,7 +1308,7 @@ export default function Home() {
                   type="button"
                   className="silk-raised shrink-0 border-0 bg-[#e9edf3] text-slate-700 hover:bg-[#e9edf3]"
                   onClick={handleReloadModelList}
-                  disabled={isLoadingModels}
+                  disabled={isLoadingModels || isTestingApiKey}
                 >
                   {isLoadingModels ? <Loader2 className="h-4 w-4 animate-spin" /> : "再取得"}
                 </Button>
@@ -1259,6 +1324,27 @@ export default function Home() {
               <p className="text-xs text-slate-500">
                 一覧は「取得できたモデル候補」。直接指定は未表示モデルや将来モデルを手入力で使うための欄です。
               </p>
+              <div className="flex items-center gap-2 pt-1">
+                <Button
+                  size="sm"
+                  type="button"
+                  className="silk-raised border-0 bg-[#e9edf3] text-slate-700 hover:bg-[#e9edf3]"
+                  onClick={handleTestConnection}
+                  disabled={isTestingApiKey || isSavingModel}
+                >
+                  {isTestingApiKey ? <Loader2 className="h-4 w-4 animate-spin" /> : "接続テスト"}
+                </Button>
+                <Button
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                  className="text-slate-600"
+                  onClick={handleClearApiKey}
+                  disabled={isClearingApiKey || isSavingModel}
+                >
+                  {isClearingApiKey ? <Loader2 className="h-4 w-4 animate-spin" /> : "APIキーをクリア"}
+                </Button>
+              </div>
               {modelMessage && <p className="text-xs text-slate-600">{modelMessage}</p>}
             </div>
 

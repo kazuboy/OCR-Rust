@@ -70,6 +70,8 @@ impl ConfigManager {
 pub struct ModelSettings {
     pub model_id: String,
     pub has_api_key: bool,
+    pub has_saved_api_key: bool,
+    pub has_env_api_key: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -101,18 +103,22 @@ pub fn save_templates(
 #[tauri::command]
 pub fn get_model_settings(state: tauri::State<'_, crate::AppState>) -> Result<ModelSettings, String> {
     let config = state.config.lock().map_err(|e| e.to_string())?;
-    let has_api_key = config
+    let has_saved_api_key = config
         .api_key
         .as_ref()
         .map(|k| !k.trim().is_empty())
-        .unwrap_or(false)
-        || std::env::var("GEMINI_API_KEY")
-            .ok()
-            .map(|v| !v.trim().is_empty())
-            .unwrap_or(false);
+        .unwrap_or(false);
+    let has_env_api_key = std::env::var("GEMINI_API_KEY")
+        .ok()
+        .map(|v| !v.trim().is_empty())
+        .unwrap_or(false);
+    let has_api_key = has_saved_api_key || has_env_api_key;
+
     Ok(ModelSettings {
         model_id: config.model_id.clone(),
         has_api_key,
+        has_saved_api_key,
+        has_env_api_key,
     })
 }
 
@@ -124,6 +130,27 @@ pub fn set_model_id(model_id: String, state: tauri::State<'_, crate::AppState>) 
     }
     let mut config = state.config.lock().map_err(|e| e.to_string())?;
     config.model_id = trimmed.to_string();
+    state.config_manager.save(&config).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_api_key(api_key: String, state: tauri::State<'_, crate::AppState>) -> Result<(), String> {
+    let trimmed = api_key.trim();
+    if trimmed.is_empty() {
+        return Err("API Key cannot be empty".to_string());
+    }
+
+    let mut config = state.config.lock().map_err(|e| e.to_string())?;
+    config.api_key = Some(trimmed.to_string());
+    state.config_manager.save(&config).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn clear_api_key(state: tauri::State<'_, crate::AppState>) -> Result<(), String> {
+    let mut config = state.config.lock().map_err(|e| e.to_string())?;
+    config.api_key = None;
     state.config_manager.save(&config).map_err(|e| e.to_string())?;
     Ok(())
 }

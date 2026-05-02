@@ -42,6 +42,8 @@ pub fn run() {
             config::save_templates,
             config::get_model_settings,
             config::set_model_id,
+            config::set_api_key,
+            config::clear_api_key,
             config::list_available_models
         ])
         .setup(|app| {
